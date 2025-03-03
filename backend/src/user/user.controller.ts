@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Delete, Param, Body, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Body,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -11,9 +20,20 @@ export class UserController {
   }
 
   @Post()
-  async createUser(@Body() body: { email: string; password: string; role: 'USER' | 'ADMIN' | 'MANAGER' }) {
+  async createUser(
+    @Body()
+    body: {
+      email: string;
+      password: string;
+      role: 'USER' | 'ADMIN' | 'MANAGER';
+    },
+  ) {
     try {
-      return await this.userService.createUser(body.email, body.password, body.role);
+      return await this.userService.createUser(
+        body.email,
+        body.password,
+        body.role,
+      );
     } catch (error) {
       throw new HttpException(
         { success: false, message: error.message },
