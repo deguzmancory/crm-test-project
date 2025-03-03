@@ -32,8 +32,7 @@ pids/
 *.pid.lock
 
 # Environment Files
-.env*
-.env.*
+.env
 
 # =============================
 # 🔹 Backend (NestJS) Ignore
