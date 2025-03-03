@@ -7,16 +7,34 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { UserService } from './user.service';
+import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/auth/roles.decorator';
+import { RolesGuard } from 'src/auth/roles/roles.guard';
 
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
 
+  @Get('admin')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
+  getAdminPanel() {
+    return { message: 'Welcome, Admin' };
+  }
+
   @Get()
   async getUsers() {
     return this.userService.getAllUsers();
+  }
+
+  @Get('profile')
+  @UseGuards(AuthGuard('jwt'))
+  getProfile(@Request() req) {
+    return req.user;
   }
 
   @Post()
