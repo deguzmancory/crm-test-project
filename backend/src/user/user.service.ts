@@ -11,7 +11,13 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async getAllUsers() {
-    return this.prisma.user.findMany();
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
+    });
   }
 
   async createUser(
@@ -20,8 +26,19 @@ export class UserService {
     role: 'USER' | 'ADMIN' | 'MANAGER',
   ) {
     try {
+      // Check if user exists
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (existingUser) {
+        throw new BadRequestException('Email is already in use.')
+      }
+
+      // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      // Create user
       const user = await this.prisma.user.create({
         data: {
           email,
@@ -33,7 +50,11 @@ export class UserService {
       return {
         success: true,
         message: 'User created successfully.',
-        data: user,
+        data: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        }
       };
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
@@ -42,19 +63,23 @@ export class UserService {
   }
 
   async deleteUser(id: string) {
-    try {
-      const user = await this.prisma.user.delete({
-        where: { id },
-      });
+    // Check if the user exists before attempting deletion
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
 
-      return {
-        success: true,
-        message: `User with ID ${id} deleted successfully.`,
-        data: user,
-      };
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      throw new NotFoundException(`User with ID ${id} not found.`);
+    if (!user) {
+      throw new NotFoundException('User not found.')
+    }
+
+    // Delete user if found
+    await this.prisma.user.delete({
+      where: { id },
+    });
+
+    return {
+      success: true,
+      message: `User deleted successfully.`
     }
   }
 
@@ -67,6 +92,7 @@ export class UserService {
       throw new NotFoundException('User not found.');
     }
 
+    // Validate password
     const passwordMatches = await bcrypt.compare(password, user.password);
     if (!passwordMatches) {
       throw new BadRequestException('Invalid credentials.');

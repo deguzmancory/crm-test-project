@@ -30,6 +30,7 @@ export class UserController {
   }
 
   @Get()
+  // @UseGuards(AuthGuard('jwt'))
   async getUsers() {
     return this.userService.getAllUsers();
   }
