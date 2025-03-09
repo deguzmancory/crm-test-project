@@ -1,12 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsNotEmpty, MinLength } from 'class-validator';
-
-// ✅ Define a TypeScript Enum
-export enum UserRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-  MANAGER = 'MANAGER',
-}
+import { IsEmail, IsNotEmpty } from 'class-validator';
+import { UserRole } from 'src/enums/role.enum';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'test@example.com', description: 'User email address' })
@@ -14,13 +8,23 @@ export class CreateUserDto {
   @IsNotEmpty()
   email: string;
 
-  @ApiProperty({ example: 'password123', description: 'User password (min. 6 characters)' })
-  @MinLength(6)
+  @ApiProperty({ example: 'password123', description: 'User password (plain text)' })
   @IsNotEmpty()
   password: string;
 
-  @ApiProperty({ example: 'USER', enum: UserRole, description: 'User role' })
-  @IsEnum(UserRole) // ✅ Correct usage
+  @ApiProperty({ example: 'ADMIN', description: 'User role' })
   @IsNotEmpty()
   role: UserRole;
+
+  @ApiProperty({ example: 'john123', description: 'Unique username' })
+  @IsNotEmpty()
+  username: string;
+
+  @ApiProperty({ example: 'John', description: 'User first name' })
+  @IsNotEmpty()
+  firstName: string;
+
+  @ApiProperty({ example: 'Doe', description: 'User last name' })
+  @IsNotEmpty()
+  lastName: string;
 }

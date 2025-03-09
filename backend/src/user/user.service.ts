@@ -4,6 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserRole } from 'src/enums/role.enum';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -14,16 +15,35 @@ export class UserService {
     return this.prisma.user.findMany({
       select: {
         id: true,
+        username: true,
+        firstName: true,
+        lastName: true,
         email: true,
         role: true,
       },
     });
   }
 
+  async getUserById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+      }
+    });
+  }
+
   async createUser(
+    username: string,
+    firstName: string,
+    lastName: string,
     email: string,
     password: string,
-    role: 'USER' | 'ADMIN' | 'MANAGER',
+    role: UserRole
   ) {
     try {
       // Check if user exists
@@ -41,6 +61,9 @@ export class UserService {
       // Create user
       const user = await this.prisma.user.create({
         data: {
+          username,
+          firstName,
+          lastName,
           email,
           password: hashedPassword,
           role,
@@ -52,6 +75,9 @@ export class UserService {
         message: 'User created successfully.',
         data: {
           id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           role: user.role,
         }
@@ -103,6 +129,9 @@ export class UserService {
       message: 'Login Successful',
       data: {
         id: user.id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
       },
