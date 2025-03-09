@@ -18,9 +18,12 @@ services:
       - postgres
     env_file:
       - .env
-    command: ["/bin/sh", "-c", "sleep 5 && npx prisma generate && npx prisma migrate deploy && npm run start"]
     ports:
       - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: ["/bin/sh", "-c", "sleep 5 && npx prisma generate && npx prisma migrate deploy && npm run start:dev"]
 
   frontend:
     build: ./frontend

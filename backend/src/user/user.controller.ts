@@ -10,11 +10,14 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/auth/roles.decorator';
 import { RolesGuard } from 'src/auth/roles/roles.guard';
+import { CreateUserDto } from './dto/user.dto';
 
+@ApiTags('Users')
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
@@ -38,25 +41,14 @@ export class UserController {
   }
 
   @Post()
-  async createUser(
-    @Body()
-    body: {
-      email: string;
-      password: string;
-      role: 'USER' | 'ADMIN' | 'MANAGER';
-    },
-  ) {
+  @ApiOperation({ summary: 'Create a new user test' })
+  @ApiBody({ type: CreateUserDto })
+  @ApiResponse({ status: 201, description: 'User created successfully' })
+  async createUser(@Body() body: CreateUserDto) {
     try {
-      return await this.userService.createUser(
-        body.email,
-        body.password,
-        body.role,
-      );
+      return await this.userService.createUser(body.email, body.password, body.role);
     } catch (error) {
-      throw new HttpException(
-        { success: false, message: error.message },
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException({ success: false, message: error.message }, HttpStatus.BAD_REQUEST);
     }
   }
 
