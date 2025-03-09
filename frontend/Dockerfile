@@ -13,8 +13,15 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
-# Expose the correct port
+# Set necessary environment variables for hot reloading
+ENV CHOKIDAR_USEPOLLING=true
+ENV WATCHPACK_POLLING=true
+
+# Expose the Next.js port
 EXPOSE 5173
 
-# Start Next.js in development mode with the correct port
-CMD ["sh", "-c", "npm run dev -- --port 5173"]
+# Set correct permissions for Next.js
+RUN chmod -R 777 /app
+
+# Start Next.js in development mode
+CMD ["npm", "run", "dev", "--", "-p", "5173", "-H", "0.0.0.0"]
