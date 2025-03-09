@@ -10,6 +10,15 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://backend:3000/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
