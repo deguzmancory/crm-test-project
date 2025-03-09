@@ -41,7 +41,7 @@ export class UserController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new user test' })
+  @ApiOperation({ summary: 'Create a new user' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   async createUser(@Body() body: CreateUserDto) {
