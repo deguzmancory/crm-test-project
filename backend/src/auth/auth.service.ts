@@ -2,6 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { Role } from '@prisma/client';
+import { CreateUserDto } from 'src/user/dto/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -24,15 +26,25 @@ export class AuthService {
     return user;
   }
 
-  async signup(email: string, password: string) {
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      throw new UnauthorizedException('User already exists')
+  async signup(createUserDto: CreateUserDto) {
+    const { email, username, firstName, lastName, password, role } = createUserDto;
+
+    const userExists = await this.prisma.user.findUnique({ where: { email } });
+    if (userExists) {
+      throw new UnauthorizedException('User already exists');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     return await this.prisma.user.create({
-      data: { email, password: hashedPassword, role: "USER" },
+      data: {
+        email,
+        username,
+        firstName,
+        lastName,
+        password: hashedPassword,
+        role: role || Role.USER, 
+      },
     });
   }
 
@@ -55,7 +67,7 @@ export class AuthService {
         throw new UnauthorizedException('User not found');
       }
 
-      return this.login(user); // ✅ Return new tokens
+      return this.login(user); 
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
