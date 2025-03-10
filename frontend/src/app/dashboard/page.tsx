@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Navbar from "@/components/Navbar";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -56,6 +57,7 @@ export default function DashboardPage() {
 
     return (
         <div>
+            <Navbar />
             <h1 className="text-2xl">Welcome, {user.email}!</h1>
             <button
                 onClick={handleLogout}
