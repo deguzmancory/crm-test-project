@@ -13,14 +13,21 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!email) {
+        throw new UnauthorizedException("Email is required for authentication.");
+    }
+
+    const user = await this.prisma.user.findUnique({
+        where: { email },
+    });
+
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+        throw new UnauthorizedException("Invalid credentials");
     }
 
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+        throw new UnauthorizedException("Invalid credentials");
     }
 
     return user;
@@ -29,24 +36,29 @@ export class AuthService {
   async signup(createUserDto: CreateUserDto) {
     const { email, username, firstName, lastName, password, role } = createUserDto;
 
+    if (!email || !username) {
+        throw new UnauthorizedException("Email and Username are required.");
+    }
+
     const userExists = await this.prisma.user.findUnique({ where: { email } });
     if (userExists) {
-      throw new UnauthorizedException('User already exists');
+        throw new UnauthorizedException("User already exists");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     return await this.prisma.user.create({
-      data: {
-        email,
-        username,
-        firstName,
-        lastName,
-        password: hashedPassword,
-        role: role || Role.USER, 
-      },
+        data: {
+            email,
+            username,
+            firstName,
+            lastName,
+            password: hashedPassword,
+            role: role || Role.USER, 
+        },
     });
   }
+
 
   async login(user: { id: string; email: string; role: string }) {
     const payload = { sub: user.id, email: user.email, role: user.role };
@@ -55,21 +67,26 @@ export class AuthService {
     const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return { access_token, refresh_token };
-}
+  }
 
 
   async refreshToken(refresh_token: string) {
     try {
-      const payload = this.jwtService.verify(refresh_token);
-      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+        const payload = this.jwtService.verify(refresh_token);
 
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
+        if (!payload.sub) {
+            throw new UnauthorizedException("Invalid token payload.");
+        }
 
-      return this.login(user); 
+        const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+
+        if (!user) {
+            throw new UnauthorizedException("User not found");
+        }
+
+        return this.login(user); 
     } catch (error) {
-      throw new UnauthorizedException('Invalid refresh token');
+        throw new UnauthorizedException("Invalid refresh token");
     }
   }
 }
