@@ -66,14 +66,13 @@ Once the backend is running, open Swagger UI to explore the API:
 `localhost:3000/api/docs`
 
 5. ### Running Prisma Migrations
-If you need to reset or apply migrations, run:
+If you update `schema.prisma`, generate a new migration:
 ```
-docker exec -it backend sh
-npx prisma migrate reset --force
+npx prisma migrate dev --name add_new_table
+git add prisma/migrations/
+git commit -m "feat: add new_table migration"
+git push origin feature/your-branch
 ```
-This will:
-- Drop the database
-- Reapply all migrations
 
 6. ### Stopping and Restarting the App
 To Stop All Containers
@@ -97,6 +96,7 @@ Run:
 docker exec -it backend sh
 npx prisma migrate deploy
 ```
+This applies all pending migrations.
 
 ---
 
