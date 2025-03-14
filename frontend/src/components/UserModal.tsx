@@ -1,118 +1,100 @@
-"use client";
-
 import { useEffect, useState } from "react";
 
 interface UserModalProps {
     isOpen: boolean;
     onClose: () => void;
     onCreateUser: (userData: {
+        id?: number;
         username: string;
         firstName: string;
         lastName: string;
         email: string;
-        password: string;
-        role: "USER" | "MANAGER" | "ADMIN";
-    }) => void;
+        password?: string;
+        roles: string[];
+    }) => Promise<void>;
+    user?: {
+        id: number;
+        username: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        roles: string[];
+    } | null;
 }
 
-export default function UserModal({ isOpen, onClose, onCreateUser }: UserModalProps) {
-    const initialFormState: {
-        username: string;
-        firstName: string;
-        lastName: string;
-        email: string;
-        password: string;
-        role: "USER" | "MANAGER" | "ADMIN";
-    } = {
+export default function UserModal({ isOpen, onClose, onCreateUser, user }: UserModalProps) {
+    const [formData, setFormData] = useState({
+        id: user?.id ?? undefined, // Ensure ID is undefined for new users
         username: "",
         firstName: "",
         lastName: "",
         email: "",
         password: "",
-        role: "USER",
-    };
+        roles: ["SALES_REP"],
+    });
 
-    const [formData, setFormData] = useState(initialFormState);
-
-    // Reset form when modal opens
     useEffect(() => {
-        if (isOpen) {
-            setFormData(initialFormState);
+        if (isOpen && user) {
+            setFormData({
+                id: user.id, // Assign ID only for updating users
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                password: "", // Keep password blank for security
+                roles: user.roles,
+            });
+        } else {
+            setFormData({
+                id: undefined, // Ensure ID is not included for new users
+                username: "",
+                firstName: "",
+                lastName: "",
+                email: "",
+                password: "",
+                roles: ["SALES_REP"],
+            });
         }
-    }, [isOpen]);
+    }, [isOpen, user]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: name === "role" ? (value as "USER" | "MANAGER" | "ADMIN") : value,
-        }));
+
+        if (name === "roles" && e.target instanceof HTMLSelectElement) {
+            const selectedRoles = Array.from(e.target.selectedOptions, (option) => option.value);
+            setFormData((prev) => ({ ...prev, roles: selectedRoles }));
+        } else {
+            setFormData((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onCreateUser(formData);
+
+        // Create payload and remove password if updating
+        const userPayload = user ? { ...formData, password: undefined } : formData;
+
+        await onCreateUser(userPayload);
         onClose();
     };
 
     return (
-        <div className={`fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center ${isOpen ? "block" : "hidden"}`}>
+        <div className={`fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center ${isOpen ? "block" : "hidden"}`}>
             <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-                <h2 className="text-xl font-bold mb-4 text-black">Create New User</h2>
+                <h2 className="text-xl font-bold mb-4 text-black">{user ? "Update User" : "Create New User"}</h2>
                 <form onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleChange}
-                        className="w-full p-2 mb-2 border rounded text-black"
-                        required
-                    />
-                    <input
-                        type="text"
-                        name="firstName"
-                        placeholder="First Name"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        className="w-full p-2 mb-2 border rounded text-black"
-                        required
-                    />
-                    <input
-                        type="text"
-                        name="lastName"
-                        placeholder="Last Name"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        className="w-full p-2 mb-2 border rounded text-black"
-                        required
-                    />
-                    <input
-                        type="email"
-                        name="email"
-                        placeholder="Email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        className="w-full p-2 mb-2 border rounded text-black"
-                        required
-                    />
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="w-full p-2 mb-2 border rounded text-black"
-                        required
-                    />
-                    <select
-                        name="role"
-                        value={formData.role}
-                        onChange={handleChange}
-                        className="w-full p-2 mb-2 border rounded text-black"
-                    >
-                        <option value="USER">User</option>
-                        <option value="MANAGER">Manager</option>
+                    <input type="text" name="username" placeholder="Username" value={formData.username} onChange={handleChange} className="w-full p-2 mb-2 border rounded text-black" required />
+                    <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} className="w-full p-2 mb-2 border rounded text-black" required />
+                    <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} className="w-full p-2 mb-2 border rounded text-black" required />
+                    <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="w-full p-2 mb-2 border rounded text-black" required />
+
+                    {!user && (
+                        <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} className="w-full p-2 mb-2 border rounded text-black" required />
+                    )}
+
+                    <label className="text-white block mb-2">Roles:</label>
+                    <select name="roles" multiple value={formData.roles} onChange={handleChange} className="w-full p-2 mb-2 border rounded text-black">
+                        <option value="SALES_REP">Sales Representative</option>
                         <option value="ADMIN">Admin</option>
                     </select>
 
@@ -121,7 +103,7 @@ export default function UserModal({ isOpen, onClose, onCreateUser }: UserModalPr
                             Cancel
                         </button>
                         <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
-                            Create
+                            {user ? "Update" : "Create"}
                         </button>
                     </div>
                 </form>

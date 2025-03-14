@@ -8,12 +8,12 @@ import UserModal from "@/components/UserModal";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface User {
-	id: number;
+	id: number; // Keeping this as a number in this file
 	username: string;
 	firstName: string;
 	lastName: string;
 	email: string;
-	role: "USER" | "MANAGER" | "ADMIN";
+	roles: string[];
 }
 
 export default function UsersPage() {
@@ -22,6 +22,7 @@ export default function UsersPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [currentUser, setCurrentUser] = useState<User | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [selectedUser, setSelectedUser] = useState<User | null>(null);
 	const router = useRouter();
 
 	useEffect(() => {
@@ -89,16 +90,20 @@ export default function UsersPage() {
 		}
 	};
 
-	// ✅ Corrected Create User function
+	// ✅ Create or Update User function
 	const handleCreateUser = async (
-		userData: Omit<User, "id"> & { password: string }
+		userData: { id?: number; username: string; firstName: string; lastName: string; email: string; password?: string; roles: string[] }
 	) => {
-		if (!currentUser || currentUser.role === "USER") return;
+		if (!currentUser || !currentUser.roles.includes("ADMIN")) return;
 
 		try {
 			const token = localStorage.getItem("access_token");
-			const res = await fetch(`${BASE_URL}/users`, {
-				method: "POST",
+
+			const endpoint = userData.id ? `${BASE_URL}/users/${userData.id}` : `${BASE_URL}/users`;
+			const method = userData.id ? "PUT" : "POST";
+
+			const res = await fetch(endpoint, {
+				method,
 				headers: {
 					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
@@ -108,20 +113,25 @@ export default function UsersPage() {
 
 			if (!res.ok) {
 				const errorMessage = await res.text();
-				throw new Error(`Failed to create user: ${errorMessage}`);
+				throw new Error(`Failed to ${userData.id ? "update" : "create"} user: ${errorMessage}`);
 			}
 
-			// ✅ User successfully created
-			await fetchUsers(); // 🔄 Refetch user list from backend
-			setIsModalOpen(false); // Close modal after creation
+			// User successfully created/updated
+			await fetchUsers(); // Refetch user list from backend
+			setIsModalOpen(false); // Close modal after action
 		} catch (error) {
-			console.error("Error creating user:", error);
+			console.error("Error creating/updating user:", error);
 		}
 	};
 
-	// ✅ Delete User function remains unchanged
+	const handleUpdateUser = (user: User) => {
+		setSelectedUser({ ...user, id: user.id }); 
+		setIsModalOpen(true);
+	};
+
+	// ✅ Delete User function
 	const handleDeleteUser = async (id: number) => {
-		if (!currentUser || currentUser.role !== "ADMIN") return;
+		if (!currentUser || !currentUser.roles.includes("ADMIN")) return;
 
 		try {
 			const token = localStorage.getItem("access_token");
@@ -146,47 +156,75 @@ export default function UsersPage() {
 
 			{!loading && !error && (
 				<div>
-					{/* ✅ Show "Create User" button only for MANAGER or ADMIN */}
-					{currentUser?.role !== "USER" && (
+					{/* Show "Create User" button only for ADMIN */}
+					{currentUser?.roles.includes("ADMIN") && (
 						<button
-							onClick={() => setIsModalOpen(true)}
+							onClick={() => {
+								setSelectedUser(null); // Reset selection
+								setIsModalOpen(true);
+							}}
 							className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4"
 						>
 							Create User
 						</button>
 					)}
-					<ul className="list-disc pl-6">
-						{users.map((user, index) => (
-							<li
-								key={user.id || `temp-key-${index}`}
-								className="text-lg flex justify-between items-center"
-							>
-								<span>
-									{user.username} ({user.email}) - {user.role}
-								</span>
-
-								{currentUser?.role === "ADMIN" && (
-									<button
-										onClick={() =>
-											handleDeleteUser(user.id)
-										}
-										className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded ml-4"
-									>
-										Delete
-									</button>
-								)}
-							</li>
-						))}
-					</ul>
+					<div className="overflow-x-auto">
+						<table className="w-full border-collapse border border-gray-700 text-white">
+							<thead>
+								<tr className="bg-gray-800">
+									<th className="border border-gray-700 px-4 py-2">Username</th>
+									<th className="border border-gray-700 px-4 py-2">First Name</th>
+									<th className="border border-gray-700 px-4 py-2">Last Name</th>
+									<th className="border border-gray-700 px-4 py-2">Email</th>
+									<th className="border border-gray-700 px-4 py-2">Roles</th>
+									{currentUser?.roles.includes("ADMIN") && (
+										<th className="border border-gray-700 px-4 py-2">Actions</th>
+									)}
+								</tr>
+							</thead>
+							<tbody>
+								{users.map((user) => (
+									<tr key={user.id} className="bg-gray-900 hover:bg-gray-800">
+										<td className="border border-gray-700 px-4 py-2">{user.username}</td>
+										<td className="border border-gray-700 px-4 py-2">{user.firstName}</td>
+										<td className="border border-gray-700 px-4 py-2">{user.lastName}</td>
+										<td className="border border-gray-700 px-4 py-2">{user.email}</td>
+										<td className="border border-gray-700 px-4 py-2">{user.roles.join(", ")}</td>
+										{currentUser?.roles.includes("ADMIN") && (
+											// <td className="border border-gray-700 px-4 py-2 flex space-x-2">
+											// 	<button
+											// 		onClick={() => handleUpdateUser(user)}
+											// 		className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+											// 	>
+											// 		Update
+											// 	</button>
+											// 	<button
+											// 		onClick={() => handleDeleteUser(user.id)}
+											// 		className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+											// 	>
+											// 		Delete
+											// 	</button>
+											// </td>
+											<td className="border border-gray-700 px-4 py-2 flex center">
+												<button
+													onClick={() => handleDeleteUser(user.id)}
+													className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+												>
+													Delete
+												</button>
+											</td>
+											
+										)}
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
 				</div>
 			)}
 
-			{/* ✅ User Modal for creating new users */}
-			<UserModal
-				isOpen={isModalOpen}
-				onClose={() => setIsModalOpen(false)}
-				onCreateUser={handleCreateUser}
-			/>
+			{/* User Modal for creating or updating users */}
+			<UserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreateUser={handleCreateUser} user={selectedUser} />
 		</div>
 	);
 }

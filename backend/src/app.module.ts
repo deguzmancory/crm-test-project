@@ -5,6 +5,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { UserModule } from './user/user.module';
+import { AccountModule } from './account/account.module';
+import { ContactModule } from './contact/contact.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { FollowUpModule } from './followup/followup.module';
 
 @Module({
   imports: [
@@ -20,6 +24,10 @@ import { UserModule } from './user/user.module';
         signOptions: { expiresIn: '1d' },
       }),
     }),
+    AccountModule,
+    ContactModule,
+    FollowUpModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
 })

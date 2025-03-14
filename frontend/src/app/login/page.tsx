@@ -23,38 +23,40 @@ export default function LoginPage() {
             });
 
             if (!res.ok) {
-                setError("Invalid credentials");
-                return;
+                const errorText = await res.text();
+                throw new Error(errorText || "Invalid credentials");
             }
 
             const data = await res.json();
-            localStorage.setItem("access_token", data.access_token);
-            localStorage.setItem("refresh_token", data.refresh_token);
+            localStorage.setItem("access_token", data.accessToken);
+            localStorage.setItem("refresh_token", data.refreshToken);
             router.push("/dashboard");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Login error:", error);
-            setError("Something went wrong. Please try again.");
+            setError(error.message || "Something went wrong. Please try again.");
         }
     };
 
     return (
         <div className="flex justify-center items-center h-screen">
             <form onSubmit={handleSubmit} className="bg-white p-8 shadow-md rounded-lg">
-                <h2 className="text-2xl font-semibold mb-4 gray-700">Login</h2>
+                <h2 className="text-2xl font-semibold mb-4 text-gray-700">Login</h2>
                 {error && <p className="text-red-500">{error}</p>}
                 <input
                     type="email"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="border p-2 w-full mb-2 gray-700"
+                    className="border p-2 w-full mb-2 text-gray-700"
+                    required
                 />
                 <input
                     type="password"
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="border p-2 w-full mb-4 gray-700" 
+                    className="border p-2 w-full mb-4 text-gray-700"
+                    required
                 />
                 <button className="bg-blue-500 text-white px-4 py-2 rounded w-full">
                     Sign In

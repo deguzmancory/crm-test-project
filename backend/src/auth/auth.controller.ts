@@ -1,8 +1,9 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import { CreateUserDto } from 'src/user/dto/user.dto';
+import { ApiOperation, ApiResponse, ApiBody, ApiTags } from '@nestjs/swagger';
+import { CreateUserDto } from '../user/dto/create-user.dto';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -10,19 +11,25 @@ export class AuthController {
   @Post('signup')
   @ApiOperation({ summary: 'User Signup' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
+  @ApiResponse({ status: 400, description: 'User already exists' })
   @ApiBody({ type: CreateUserDto })
   async signup(@Body() createUserDto: CreateUserDto) {
-    return this.authService.signup(createUserDto); 
+    return this.authService.registerUser(createUserDto);
   }
 
   @Post('login')
+  @ApiOperation({ summary: 'User Login' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 400, description: 'Invalid credentials' })
   async login(@Body() body: { email: string; password: string }) {
-    const user = await this.authService.validateUser(body.email, body.password);
-    return this.authService.login(user);
+    return this.authService.loginUser(body.email, body.password);
   }
 
   @Post('refresh-token')
-  async refreshToken(@Body() body: { refresh_token: string }) {
-    return this.authService.refreshToken(body.refresh_token);
+  @ApiOperation({ summary: 'Refresh Access Token' })
+  @ApiResponse({ status: 200, description: 'New access token generated' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired refresh token' })
+  async refreshToken(@Body() body: { refreshToken: string }) {
+    return this.authService.refreshUserToken(body.refreshToken);
   }
 }

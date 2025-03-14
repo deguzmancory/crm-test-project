@@ -14,25 +14,50 @@ interface User {
 
 export default function DashboardPage() {
     const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
         const fetchUser = async () => {
-            const token = localStorage.getItem("access_token");
-            if (!token) {
+            let accessToken = localStorage.getItem("access_token");
+            let refreshToken = localStorage.getItem("refresh_token");
+
+            if (!accessToken) {
                 router.push("/login");
                 return;
             }
 
             try {
-                const res = await fetch(`${BASE_URL}/users/profile`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                let res = await fetch(`${BASE_URL}/users/profile`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
                 });
 
+                if (res.status === 401 && refreshToken) {
+                    // Attempt to refresh token
+                    const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ refreshToken }),
+                    });
+
+                    if (refreshRes.ok) {
+                        const refreshData = await refreshRes.json();
+                        localStorage.setItem("access_token", refreshData.accessToken);
+                        accessToken = refreshData.accessToken;
+
+                        res = await fetch(`${BASE_URL}/users/profile`, {
+                            headers: { Authorization: `Bearer ${accessToken}` },
+                        });
+                    } else {
+                        localStorage.removeItem("access_token");
+                        localStorage.removeItem("refresh_token");
+                        router.push("/login");
+                        return;
+                    }
+                }
+
                 if (!res.ok) {
-                    localStorage.removeItem("access_token");
-                    router.push("/login");
-                    return;
+                    throw new Error("Failed to fetch user");
                 }
 
                 const data = await res.json();
@@ -40,7 +65,10 @@ export default function DashboardPage() {
             } catch (error) {
                 console.error("Error fetching user:", error);
                 localStorage.removeItem("access_token");
+                localStorage.removeItem("refresh_token");
                 router.push("/login");
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -50,15 +78,15 @@ export default function DashboardPage() {
     const handleLogout = () => {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
-        router.push("/login")
+        router.push("/login");
     };
 
-    if (!user) return <p>Loading...</p>;
+    if (loading) return <p>Loading...</p>;
 
     return (
         <div>
             <Navbar />
-            <h1 className="text-2xl">Welcome, {user.email}!</h1>
+            <h1 className="text-2xl">Welcome, {user?.email}!</h1>
             <button
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
