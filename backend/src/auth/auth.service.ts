@@ -1,47 +1,35 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import { CreateUserDto } from '../user/dto/create-user.dto';
 import { RoleType } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
-  // Generate Access & Refresh Tokens
   private generateTokens(userId: string, email: string, roles: RoleType[]) {
     const payload = { id: userId, email, roles };
-    
+
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET,
-      expiresIn: '1h', // Access token expires in 1 hour
+      expiresIn: '1h',
     });
 
     const refreshToken = this.jwtService.sign(payload, {
       secret: process.env.REFRESH_SECRET,
-      expiresIn: '7d', // Refresh token expires in 7 days
+      expiresIn: '7d',
     });
 
     return { accessToken, refreshToken };
   }
 
   async registerUser(dto: CreateUserDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-
+    const existingUser = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existingUser) throw new BadRequestException('Email already in use.');
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-
     const newUser = await this.prisma.user.create({
       data: {
         email: dto.email,
@@ -64,17 +52,7 @@ export class AuthService {
       select: { role: true },
     });
 
-    const { accessToken, refreshToken } = this.generateTokens(
-      newUser.id,
-      newUser.email,
-      assignedRoles.map(r => r.role),
-    );
-
-    return {
-      user: newUser,
-      accessToken,
-      refreshToken,
-    };
+    return this.generateTokens(newUser.id, newUser.email, assignedRoles.map(r => r.role));
   }
 
   async loginUser(email: string, password: string) {
@@ -88,31 +66,12 @@ export class AuthService {
     const passwordMatches = await bcrypt.compare(password, user.password);
     if (!passwordMatches) throw new BadRequestException('Invalid credentials.');
 
-    const { accessToken, refreshToken } = this.generateTokens(
-      user.id,
-      user.email,
-      user.roles.map(r => r.role),
-    );
-
-    return {
-      user: {
-        id: user.id,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        roles: user.roles.map(r => r.role),
-      },
-      accessToken,
-      refreshToken,
-    };
+    return this.generateTokens(user.id, user.email, user.roles.map(r => r.role));
   }
 
   async refreshUserToken(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.REFRESH_SECRET,
-      });
+      const payload = this.jwtService.verify(refreshToken, { secret: process.env.REFRESH_SECRET });
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.id },
@@ -121,13 +80,7 @@ export class AuthService {
 
       if (!user) throw new NotFoundException('User not found.');
 
-      const newTokens = this.generateTokens(
-        user.id,
-        user.email,
-        user.roles.map(r => r.role),
-      );
-
-      return newTokens;
+      return this.generateTokens(user.id, user.email, user.roles.map(r => r.role));
     } catch (error) {
       throw new BadRequestException('Invalid or expired refresh token.');
     }
