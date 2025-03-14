@@ -1,16 +1,15 @@
-// frontend/src/app/profile/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "../../components/Navbar";
+import Navbar from "@/components/Navbar";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface User {
   id: string;
   email: string;
-  role: string;
+  roles: string;
 }
 
 export default function ProfilePage() {
@@ -19,21 +18,45 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
+      let accessToken = localStorage.getItem("access_token");
+      let refreshToken = localStorage.getItem("refresh_token");
+
+      if (!accessToken) {
         router.push("/login");
         return;
       }
 
       try {
-        const res = await fetch(`${BASE_URL}/users/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
+        let res = await fetch(`${BASE_URL}/users/profile`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
+        if (res.status === 401 && refreshToken) {
+          // Attempt to refresh token
+          const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            localStorage.setItem("access_token", refreshData.accessToken);
+            accessToken = refreshData.accessToken;
+
+            res = await fetch(`${BASE_URL}/users/profile`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+          } else {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            router.push("/login");
+            return;
+          }
+        }
+
         if (!res.ok) {
-          localStorage.removeItem("access_token");
-          router.push("/login");
-          return;
+          throw new Error("Failed to fetch user");
         }
 
         const data = await res.json();
@@ -41,6 +64,7 @@ export default function ProfilePage() {
       } catch (error) {
         console.error("Error fetching user:", error);
         localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         router.push("/login");
       }
     };
@@ -56,7 +80,7 @@ export default function ProfilePage() {
       <div className="p-6">
         <h1 className="text-2xl">Profile</h1>
         <p>Email: {user.email}</p>
-        <p>Role: {user.role}</p>
+        <p>Role: {user.roles}</p>
       </div>
     </div>
   );

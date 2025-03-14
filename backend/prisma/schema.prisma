@@ -7,32 +7,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Project {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  status      String   @default("pending") // Possible values: pending, active, completed
-  startDate   DateTime?
-  dueDate     DateTime?
-  clientId    String
-  managerId   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  client  Client @relation(fields: [clientId], references: [id])
-  manager User?  @relation(fields: [managerId], references: [id], name: "UserProjects")
-}
-
-model Client {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  projects  Project[]
-  createdAt DateTime @default(now())
-}
-
+/// **Users Table (Admins & Salespeople)**
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -40,14 +15,110 @@ model User {
   firstName String
   lastName  String
   password  String
-  role      Role     @default(USER)
-  projects  Project[] @relation(name: "UserProjects")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relationships
+  accounts      Account[]      @relation("SalesRep_Account")
+  followUps     FollowUp[]
+  subscriptions Subscription[]
+  roles         UserRole[]
 }
 
-enum Role {
+enum RoleType {
   ADMIN
-  MANAGER
-  USER
+  SALES_REP
+}
+
+/// **User Role Table (Many-to-Many Relationship for Roles)**
+model UserRole {
+  id     String   @id @default(uuid())
+  userId String
+  role   RoleType
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade) // Deletes roles if user is deleted
+}
+
+/// **B2B Accounts Table**
+model Account {
+  id         String          @id @default(uuid())
+  name       String
+  industry   String?
+  category   AccountCategory @default(C)
+  contactId  String?         @unique
+  salesRepId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // Relationships
+  salesRep  User?      @relation(fields: [salesRepId], references: [id], onDelete: SetNull, name: "SalesRep_Account")
+  followUps FollowUp[]
+  contact   Contact[]
+}
+
+enum AccountCategory {
+  A
+  B
+  C
+  D
+}
+
+/// **Contacts Table**
+model Contact {
+  id        String   @id @default(uuid())
+  accountId String   @unique
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+
+  // Relationships
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+/// **Follow-ups Table**
+model FollowUp {
+  id           String         @id @default(uuid())
+  accountId    String
+  salesRepId   String?
+  followUpDate DateTime
+  status       FollowUpStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+
+  // Relationships
+  account  Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  salesRep User?   @relation(fields: [salesRepId], references: [id], onDelete: SetNull)
+}
+
+enum FollowUpStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+}
+
+/// **Subscription Table**
+model Subscription {
+  id        String             @id @default(uuid())
+  userId    String
+  plan      SubscriptionPlan   @default(BASIC)
+  status    SubscriptionStatus @default(ACTIVE)
+  startDate DateTime           @default(now())
+  endDate   DateTime
+  createdAt DateTime           @default(now())
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade) // Deletes subscription when user is deleted
+}
+
+enum SubscriptionPlan {
+  BASIC
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
 }
