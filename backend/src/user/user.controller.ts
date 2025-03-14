@@ -35,7 +35,8 @@ export class UserController {
 
   // Get all users
   @Get()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
   async getUsers(@Req() req: Request) {
     const user = req as AuthRequest;
     console.log('Headers:', user.headers);
@@ -53,7 +54,8 @@ export class UserController {
 
   // Get user roles by ID
   @Get(':id/roles')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
   async getUserRoles(@Param('id') id: string) {
     const roles = await this.userService.getUserRoles(id);
     return {id, roles};
@@ -69,13 +71,16 @@ export class UserController {
 
 
   // Create a new user
-  // @Post()
-  // @ApiOperation({ summary: 'Create a new user' })
-  // @ApiBody({ type: CreateUserDto })
-  // @ApiResponse({ status: 201, description: 'User created successfully' })
-  // async createUser(@Body() body: CreateUserDto) {
-  //   return this.userService.createUser(body);
-  // }
+  @Post()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Create a new user (Admin only)' })
+  @ApiBody({ type: CreateUserDto })
+  @ApiResponse({ status: 201, description: 'User created successfully' })
+  async createUser(@Body() createUserDto: CreateUserDto) {
+    return this.userService.createUser(createUserDto);
+}
+
 
   // Login user
   // @Post('login')
@@ -85,7 +90,8 @@ export class UserController {
 
   // Delete user
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
   async deleteUser(@Req() req: AuthRequest, @Param('id') id: string) {
     return this.userService.deleteUser(req.user.id, id);
   }

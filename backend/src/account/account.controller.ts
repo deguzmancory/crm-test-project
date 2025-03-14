@@ -4,6 +4,8 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
 
 @ApiTags('Accounts')
 @Controller('accounts')
@@ -25,7 +27,8 @@ export class AccountController {
     }
 
     @Post()
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles('ADMIN')
     @ApiOperation({ summary: 'Create a new account' })
     async createAccount(@Body() body: CreateAccountDto) {
         return this.accountService.createAccount(body);
@@ -39,7 +42,8 @@ export class AccountController {
     }
 
     @Delete(':id')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles('ADMIN')
     @ApiOperation({ summary: 'Delete an account' })
     async deleteAccount(@Param('id') id: string) {
         return this.accountService.deleteAccount(id);
