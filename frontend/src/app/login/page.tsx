@@ -61,6 +61,12 @@ export default function LoginPage() {
                 <button className="bg-blue-500 text-white px-4 py-2 rounded w-full">
                     Sign In
                 </button>
+                <p className="w-full text-center mt-4 text-gray-700">
+                    Don't have an account?{" "}
+                    <a href="/signup" className="text-blue-500">
+                        Sign up
+                    </a>
+                </p>
             </form>
         </div>
     );

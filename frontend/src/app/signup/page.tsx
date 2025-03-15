@@ -56,6 +56,12 @@ export default function SignupPage() {
                 <button className="bg-blue-500 text-white px-4 py-2 rounded w-full">
                     Sign Up
                 </button>
+                <p className="mt-4 text-center text-gray-700">
+                    Already have an account?{" "}
+                    <a href="/login" className="text-blue-500">
+                        Log in
+                    </a>
+                </p>
             </form>
         </div>
     );
