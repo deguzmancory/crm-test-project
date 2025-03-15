@@ -19,7 +19,7 @@ export default function Navbar() {
     <nav className="bg-blue-600 p-4 text-white">
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/dashboard" className="text-xl font-bold">
-          My App
+          CRM Application
         </Link>
 
         <div className="relative">

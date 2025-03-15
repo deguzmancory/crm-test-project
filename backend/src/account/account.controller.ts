@@ -12,6 +12,7 @@ import { Roles } from 'src/auth/roles.decorator';
 export class AccountController {
     constructor(private accountService: AccountService) {}
 
+    // Get all accounts
     @Get()
     @UseGuards(AuthGuard('jwt'))
     @ApiOperation({ summary: 'Get all accounts' })
@@ -27,7 +28,7 @@ export class AccountController {
         return this.accountService.getContactsByAccount(id);
     }
 
-
+    // Get account by ID
     @Get(':id')
     @UseGuards(AuthGuard('jwt'))
     @ApiOperation({ summary: 'Get account by ID' })
@@ -35,6 +36,7 @@ export class AccountController {
         return this.accountService.getAccountById(id);
     }
 
+    // Create account
     @Post()
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles('ADMIN')
@@ -43,6 +45,7 @@ export class AccountController {
         return this.accountService.createAccount(body);
     }
 
+    // Update account
     @Put(':id')
     @UseGuards(AuthGuard('jwt'))
     @ApiOperation({ summary: 'Update an account' })
@@ -50,6 +53,7 @@ export class AccountController {
         return this.accountService.updateAccount(id, body);
     }
 
+    // Delete account
     @Delete(':id')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles('ADMIN')
