@@ -14,28 +14,49 @@ export class AccountService {
                 name: true,
                 industry: true,
                 category: true,
-                contactId: true,
                 salesRepId: true,
+                contact: {  // ✅ Proper relation selection
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                    },
+                },
             },
         });
     }
-
+    
     async getAccountById(id: string) {
         const account = await this.prisma.account.findUnique({
             where: { id },
             select: {
+                id: true,
                 name: true,
                 industry: true,
                 category: true,
-                contactId: true,
                 salesRepId: true,
+                contact: {  // ✅ Proper relation selection
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                    },
+                },
             },
         });
-
+    
         if (!account) throw new NotFoundException('Account not found.');
-
         return account;
     }
+
+    async getContactsByAccount(accountId: string) {
+        return this.prisma.contact.findMany({
+            where: { accountId },
+        });
+    }    
+    
 
     async createAccount(dto: CreateAccountDto) {
         const existingAccount = await this.prisma.account.findFirst({
@@ -49,7 +70,6 @@ export class AccountService {
                 name: dto.name,
                 industry: dto.industry,
                 category: dto.category ?? 'C',
-                contactId: dto.contactId,
                 salesRepId: dto.salesRepId,
             },
         });
@@ -68,11 +88,11 @@ export class AccountService {
                 name: dto.name,
                 industry: dto.industry,
                 category: dto.category,
-                contactId: dto.contactId,
                 salesRepId: dto.salesRepId,
             },
         });
-    }    
+    }
+       
 
     async deleteAccount(id: string) {
         const account = await this.prisma.account.findUnique({

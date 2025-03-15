@@ -17,13 +17,10 @@ export class CreateAccountDto {
     @IsOptional()
     industry?: string;
 
-    @ApiProperty({ description: 'Contact ID' })
-    @IsUUID()
-    contactId: string;
-
     @ApiProperty({ description: 'Sales Rep ID' })
     @IsUUID()
-    salesRepId: string;
+    @IsOptional()
+    salesRepId?: string;
 
     @ApiProperty({ 
         example: AccountCategory.C, 

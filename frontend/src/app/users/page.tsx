@@ -8,7 +8,7 @@ import UserModal from "@/components/UserModal";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface User {
-	id: number; // Keeping this as a number in this file
+	id: number;
 	username: string;
 	firstName: string;
 	lastName: string;
@@ -90,10 +90,7 @@ export default function UsersPage() {
 		}
 	};
 
-	// ✅ Create or Update User function
-	const handleCreateUser = async (
-		userData: { id?: number; username: string; firstName: string; lastName: string; email: string; password?: string; roles: string[] }
-	) => {
+	const handleCreateUser = async (userData: { id?: number; username: string; firstName: string; lastName: string; email: string; password?: string; roles: string[] }) => {
 		if (!currentUser || !currentUser.roles.includes("ADMIN")) return;
 
 		try {
@@ -116,20 +113,18 @@ export default function UsersPage() {
 				throw new Error(`Failed to ${userData.id ? "update" : "create"} user: ${errorMessage}`);
 			}
 
-			// User successfully created/updated
-			await fetchUsers(); // Refetch user list from backend
-			setIsModalOpen(false); // Close modal after action
+			await fetchUsers();
+			setIsModalOpen(false);
 		} catch (error) {
 			console.error("Error creating/updating user:", error);
 		}
 	};
 
 	const handleUpdateUser = (user: User) => {
-		setSelectedUser({ ...user, id: user.id }); 
+		setSelectedUser({ ...user, id: user.id });
 		setIsModalOpen(true);
 	};
 
-	// ✅ Delete User function
 	const handleDeleteUser = async (id: number) => {
 		if (!currentUser || !currentUser.roles.includes("ADMIN")) return;
 
@@ -156,11 +151,10 @@ export default function UsersPage() {
 
 			{!loading && !error && (
 				<div>
-					{/* Show "Create User" button only for ADMIN */}
 					{currentUser?.roles.includes("ADMIN") && (
 						<button
 							onClick={() => {
-								setSelectedUser(null); // Reset selection
+								setSelectedUser(null);
 								setIsModalOpen(true);
 							}}
 							className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4"
@@ -184,36 +178,36 @@ export default function UsersPage() {
 							</thead>
 							<tbody>
 								{users.map((user) => (
-									<tr key={user.id} className="bg-gray-900 hover:bg-gray-800">
-										<td className="border border-gray-700 px-4 py-2">{user.username}</td>
+									<tr
+										key={user.id}
+										className="bg-gray-900 hover:bg-gray-800 cursor-pointer"
+										onClick={() => router.push(`/users/${user.id}`)}
+									>
+										<td className="border border-gray-700 px-4 py-2">
+											<a
+												href={`/users/${user.id}`}
+												className="text-blue-400 hover:underline"
+												onClick={(e) => e.stopPropagation()}
+											>
+												{user.username}
+											</a>
+										</td>
 										<td className="border border-gray-700 px-4 py-2">{user.firstName}</td>
 										<td className="border border-gray-700 px-4 py-2">{user.lastName}</td>
 										<td className="border border-gray-700 px-4 py-2">{user.email}</td>
 										<td className="border border-gray-700 px-4 py-2">{user.roles.join(", ")}</td>
 										{currentUser?.roles.includes("ADMIN") && (
-											// <td className="border border-gray-700 px-4 py-2 flex space-x-2">
-											// 	<button
-											// 		onClick={() => handleUpdateUser(user)}
-											// 		className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-											// 	>
-											// 		Update
-											// 	</button>
-											// 	<button
-											// 		onClick={() => handleDeleteUser(user.id)}
-											// 		className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-											// 	>
-											// 		Delete
-											// 	</button>
-											// </td>
 											<td className="border border-gray-700 px-4 py-2 flex center">
 												<button
-													onClick={() => handleDeleteUser(user.id)}
+													onClick={(e) => {
+														e.stopPropagation();
+														handleDeleteUser(user.id);
+													}}
 													className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
 												>
 													Delete
 												</button>
 											</td>
-											
 										)}
 									</tr>
 								))}
@@ -223,7 +217,6 @@ export default function UsersPage() {
 				</div>
 			)}
 
-			{/* User Modal for creating or updating users */}
 			<UserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreateUser={handleCreateUser} user={selectedUser} />
 		</div>
 	);

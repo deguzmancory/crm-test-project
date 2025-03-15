@@ -45,29 +45,29 @@ model Account {
   id         String          @id @default(uuid())
   name       String
   industry   String?
-  category   AccountCategory @default(C)
-  contactId  String?         @unique
+  category   AccountCategory @default(C)  
   salesRepId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
 
   // Relationships
   salesRep  User?      @relation(fields: [salesRepId], references: [id], onDelete: SetNull, name: "SalesRep_Account")
   followUps FollowUp[]
-  contact   Contact[]
+  contact  Contact[]  
 }
 
-enum AccountCategory {
+enum AccountCategory {  
   A
   B
   C
   D
 }
 
+
 /// **Contacts Table**
 model Contact {
   id        String   @id @default(uuid())
-  accountId String   @unique
+  accountId String   // Removed @unique to allow multiple contacts per account
   firstName String
   lastName  String
   email     String   @unique

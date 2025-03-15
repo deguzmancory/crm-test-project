@@ -19,6 +19,15 @@ export class AccountController {
         return this.accountService.getAllAccounts();
     }
 
+    // Get all contacts associated with an account
+    @Get(':id/contacts')
+    @UseGuards(AuthGuard('jwt'))
+    @ApiOperation({ summary: 'Get all contacts for a specific account' })
+    async getContactsByAccount(@Param('id') id: string) {
+        return this.accountService.getContactsByAccount(id);
+    }
+
+
     @Get(':id')
     @UseGuards(AuthGuard('jwt'))
     @ApiOperation({ summary: 'Get account by ID' })
