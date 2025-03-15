@@ -14,13 +14,20 @@ interface Contact {
     phone: string;
 }
 
+interface Account {
+    id: string;
+    name: string;
+}
+
 export default function ContactsPage() {
     const [contacts, setContacts] = useState<Contact[]>([]);
+    const [account, setAccount] = useState<Account | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { id } = useParams();
     const router = useRouter();
 
+    // Fetch contacts
     useEffect(() => {
         async function fetchContacts() {
             try {
@@ -49,12 +56,53 @@ export default function ContactsPage() {
         if (id) fetchContacts();
     }, [id, router]);
 
+    // Fetch account details for the "Back to {Account}" button
+    useEffect(() => {
+        async function fetchAccount() {
+            try {
+                const token = localStorage.getItem("access_token");
+                if (!token) {
+                    router.push("/login");
+                    return;
+                }
+
+                const res = await fetch(`${BASE_URL}/accounts/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (!res.ok) throw new Error("Failed to fetch account details.");
+
+                const accountData = await res.json();
+                setAccount(accountData);
+            } catch (error) {
+                console.error("Error fetching account:", error);
+                setError("Failed to load account details.");
+            }
+        }
+
+        if (id) fetchAccount();
+    }, [id, router]);
+
     return (
         <div className="p-6">
             <Navbar />
-            <h1 className="text-2xl font-bold mb-4">Contacts for Account</h1>
+            <h1 className="text-2xl font-bold mb-4">Contacts for {account?.name || "Account"}</h1>
+
+            {/* Back to Account Button */}
+            {account && (
+                <button
+                    onClick={() => router.push(`/accounts/${account.id}`)}
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded mb-4"
+                >
+                    Back to {account.name}
+                </button>
+            )}
+
             {error && <p className="text-red-500">{error}</p>}
-            {loading ? <p>Loading...</p> : (
+
+            {loading ? (
+                <p>Loading...</p>
+            ) : (
                 <table className="w-full border border-gray-700 text-white mt-4">
                     <thead>
                         <tr className="bg-gray-800">
@@ -65,14 +113,22 @@ export default function ContactsPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {contacts.length > 0 ? contacts.map((contact) => (
-                            <tr key={contact.id} className="bg-gray-900 hover:bg-gray-800">
-                                <td className="border px-4 py-2">{contact.firstName}</td>
-                                <td className="border px-4 py-2">{contact.lastName}</td>
-                                <td className="border px-4 py-2">{contact.email}</td>
-                                <td className="border px-4 py-2">{contact.phone}</td>
+                        {contacts.length > 0 ? (
+                            contacts.map((contact) => (
+                                <tr key={contact.id} className="bg-gray-900 hover:bg-gray-800">
+                                    <td className="border px-4 py-2">{contact.firstName}</td>
+                                    <td className="border px-4 py-2">{contact.lastName}</td>
+                                    <td className="border px-4 py-2">{contact.email}</td>
+                                    <td className="border px-4 py-2">{contact.phone}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={4} className="text-center py-2">
+                                    No contacts available.
+                                </td>
                             </tr>
-                        )) : <tr><td colSpan={4} className="text-center py-2">No contacts available.</td></tr>}
+                        )}
                     </tbody>
                 </table>
             )}

@@ -9,13 +9,30 @@ export class ContactService {
 
     // Get all contacts
     async getAllContacts() {
-        return this.prisma.contact.findMany();
+        return this.prisma.contact.findMany({
+            include: {
+                account: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        });
     }
 
     // Get contact by ID
     async getContactById(id: string) {
         const contact = await this.prisma.contact.findUnique({
             where: { id },
+            include: {
+                account: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
         });
 
         if (!contact) throw new NotFoundException('Contact not found.');

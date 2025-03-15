@@ -76,24 +76,12 @@ export default function DashboardPage() {
         fetchUser();
     }, [router]);
 
-    const handleLogout = () => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        router.push("/login");
-    };
-
     if (loading) return <p>Loading...</p>;
 
     return (
         <div>
             <Navbar />
             <h1 className="text-2xl">Welcome, {user?.firstName}!</h1>
-            <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-            >
-                Logout
-            </button>
         </div>
     );
 }
