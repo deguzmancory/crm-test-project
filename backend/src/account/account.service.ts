@@ -15,7 +15,7 @@ export class AccountService {
                 industry: true,
                 category: true,
                 salesRepId: true,
-                contact: {  // ✅ Proper relation selection
+                contact: {  
                     select: {
                         id: true,
                         firstName: true,
@@ -36,7 +36,7 @@ export class AccountService {
                 industry: true,
                 category: true,
                 salesRepId: true,
-                contact: {  // ✅ Proper relation selection
+                contact: { 
                     select: {
                         id: true,
                         firstName: true,
