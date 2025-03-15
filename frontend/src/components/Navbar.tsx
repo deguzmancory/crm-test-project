@@ -67,6 +67,20 @@ export default function Navbar() {
               >
                 Users
               </Link>
+              <Link
+                href="/accounts" // ✅ Added Accounts page
+                className="block px-4 py-2 hover:bg-blue-100"
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                Accounts
+              </Link>
+              <Link
+                href="/contacts" // ✅ Added Contacts page
+                className="block px-4 py-2 hover:bg-blue-100"
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                Contacts
+              </Link>
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2 hover:bg-blue-100"

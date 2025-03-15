@@ -39,11 +39,9 @@ export class UserController {
   @Roles('ADMIN')
   async getUsers(@Req() req: Request) {
     const user = req as AuthRequest;
-    console.log('Headers:', user.headers);
-    console.log('User:', user.user);
     return this.userService.getAllUsers();
   }
-
+  
   // Get user by ID
   @Get('profile')
   @UseGuards(AuthGuard('jwt'))
@@ -51,6 +49,23 @@ export class UserController {
   async getProfile(@Req() req: AuthRequest) {
     return this.userService.getUserById(req.user.id);
   }
+  
+  // Get all sales representatives
+  @Get('sales-reps')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get all Sales Representatives' })
+  async getSalesReps() {
+      return this.userService.getSalesReps();
+  }
+
+  // Get all accounts assigned to a specific sales representative
+  @Get(':id/accounts')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get all accounts assigned to a Sales Representative' })
+  async getAccountsBySalesRep(@Param('id') id: string) {
+      return this.userService.getAccountsBySalesRep(id);
+  }
+
 
   // Get user roles by ID
   @Get(':id/roles')

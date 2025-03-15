@@ -9,6 +9,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 interface User {
     id: string;
     email: string;
+    firstName: string;
     role: string;
 }
 
@@ -86,7 +87,7 @@ export default function DashboardPage() {
     return (
         <div>
             <Navbar />
-            <h1 className="text-2xl">Welcome, {user?.email}!</h1>
+            <h1 className="text-2xl">Welcome, {user?.firstName}!</h1>
             <button
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"

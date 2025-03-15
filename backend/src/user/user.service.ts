@@ -31,7 +31,7 @@ export class UserService {
         ...user,
         roles: user.roles.map(r => r.role), 
     }));
-}
+  }
 
   // Get user by ID
   async getUserById(id: string) {
@@ -54,8 +54,34 @@ export class UserService {
       ...user,
       roles: user.roles.map(r => r.role), 
     };
-}
+  }
 
+  // Get all sales representatives
+  async getSalesReps() {
+    const salesReps = await this.prisma.user.findMany({
+        where: {
+            roles: {
+                some: { role: 'SALES_REP' }, // Fetch users who have SALES_REP role
+            },
+        },
+        select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+        },
+    });
+
+    return salesReps.map(rep => ({
+        id: rep.id,
+        name: `${rep.firstName} ${rep.lastName}`, // Format full name for dropdown
+    }));
+  }
+
+  async getAccountsBySalesRep(salesRepId: string) {
+    return this.prisma.account.findMany({
+        where: { salesRepId },
+    });
+}
 
   // Get user roles
   async getUserRoles(userId: string) {

@@ -17,7 +17,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     try {
       return (await super.canActivate(context)) as boolean;
     } catch (err) {
-      console.log('Access token expired, attempting refresh...');
 
       const refreshToken = request.cookies['refresh_token'];
 
@@ -38,7 +37,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
         return true;
       } catch (refreshError) {
-        console.log('Refresh token expired, forcing logout');
         throw new UnauthorizedException('Session expired, please log in again.');
       }
     }
